@@ -1,0 +1,21 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: '@li0ard/gost3413'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Nikolai
+    family-names: Konovalov
+    email: li0ard@li0ard.rest
+    affiliation: TheInfinityWay
+    orcid: 'https://orcid.org/0009-0008-6084-7154'
+repository-code: 'https://github.com/li0ard/gost3413'
+abstract: Cipher modes and padding's according to GOST R 34.13-2015 in pure TypeScript
+keywords:
+  - gost
+  - crypto
+license: MIT

@@ -1,0 +1,34 @@
+{
+  "name": "@li0ard/gost3413",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "author": "li0ard",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/li0ard/gost3413.git"
+  },
+  "bugs": {
+    "url": "https://github.com/li0ard/gost3413/issues"
+  },
+  "homepage": "https://github.com/li0ard/gost3413#readme",
+  "description": "Cipher modes and padding's according to GOST R 34.13-2015 in pure TypeScript",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist/ && tsc --project tsconfig.build.json",
+    "docs": "typedoc --options .config/typedoc/config.cjs"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typedoc": "^0.28.7"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["gost", "crypto"]
+}
