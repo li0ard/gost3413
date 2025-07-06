@@ -1,4 +1,4 @@
-import { bytesToNumberBE, type CipherFunc, concatBytes, numberToBytesBE, xor } from "./utils";
+import { type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils";
 
 export { type CipherFunc } from "./utils"
 
@@ -264,17 +264,27 @@ export const cfb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
  * @param blockSize Cipher block size
  * @param data Input data
  * @param iv Initialization vector (Half of block size)
+ * @param acpkm Optional. Parameters for CTR-ACPKM mode
  */
-export const ctr = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const ctr = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array, acpkm?: ACPKMParameters): Uint8Array => {
     const halfBlockSize = (blockSize / 2) | 0;
     if (iv.length !== halfBlockSize) throw new Error("Invalid IV size");
 
     const ctrMax = 1n << (8n * BigInt(halfBlockSize));
     const maxSize = ctrMax * BigInt(blockSize);
     if (BigInt(data.length) > maxSize) throw new Error("Too big data");
+    let acpkmSectionSize = 0;
+
+    if(acpkm) {
+        acpkmSectionSize = (acpkm.sectionSize / blockSize) | 0
+    }
 
     const keystreamBlocks: Uint8Array[] = [];
     for (let ctr = 0; ctr < Math.ceil(data.length / blockSize); ctr++) {
+        if(acpkm && ctr != 0 && (ctr % acpkmSectionSize) == 0) {
+            let cipher = new acpkm.cipherClass(acpkmDerivation(encrypter, blockSize))
+            encrypter = cipher.encrypt.bind(cipher)
+        }
         keystreamBlocks.push(encrypter(concatBytes(iv, numberToBytesBE(ctr, halfBlockSize))));
     }
 
@@ -328,4 +338,30 @@ export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array):
     const tail = data.subarray(tailOffset);
     const xorWithPrev = xor(pad3(tail, blockSize), prev);
     return encrypter(xor(xorWithPrev, (tail.length === blockSize ? k1 : k2)));
+}
+
+export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number) => {
+    let result: Uint8Array[] = []
+    for (let d = 0x80; d < (0x80 + blockSize * ((KEYSIZE / blockSize) | 0)); d += blockSize) {
+        const block = new Uint8Array(blockSize);
+        for (let i = 0; i < blockSize; i++) {
+            block[i] = d + i;
+        }
+
+        result.push(encrypter(block))
+    }
+
+    return concatBytes(...result)
+}
+
+export const ctr_acpkm = (cipherClass: any, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array) => {
+    return ctr(
+        encrypter,
+        blockSize,
+        data, iv,
+        {
+            cipherClass,
+            sectionSize
+        }
+    )
 }

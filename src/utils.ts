@@ -1,5 +1,23 @@
 /** Type for cipher function */
 export type CipherFunc = (data: Uint8Array) => Uint8Array;
+/** Key size */
+export const KEYSIZE = 32;
+/** ACPKM class */
+export interface ACPKMClass {
+    /** Encrypting function, that takes block as input */
+    encrypt(block: Uint8Array): Uint8Array
+}
+
+/** ACPKM class constructor */
+export interface ACPKMConstructor {
+    new (key: Uint8Array): ACPKMClass
+}
+
+/** ACPKM Parameters */
+export interface ACPKMParameters {
+    cipherClass: ACPKMConstructor,
+    sectionSize: number
+}
 
 export const xor = (a: Uint8Array, b: Uint8Array) => {
     let mlen = Math.min(a.length, b.length)
