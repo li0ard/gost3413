@@ -340,7 +340,7 @@ export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array):
     return encrypter(xor(xorWithPrev, (tail.length === blockSize ? k1 : k2)));
 }
 
-export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number) => {
+export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): Uint8Array => {
     let result: Uint8Array[] = []
     for (let d = 0x80; d < (0x80 + blockSize * ((KEYSIZE / blockSize) | 0)); d += blockSize) {
         const block = new Uint8Array(blockSize);
@@ -354,14 +354,9 @@ export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number) => {
     return concatBytes(...result)
 }
 
-export const ctr_acpkm = (cipherClass: any, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array) => {
-    return ctr(
-        encrypter,
-        blockSize,
-        data, iv,
-        {
-            cipherClass,
-            sectionSize
-        }
-    )
+export const ctr_acpkm = (cipherClass: any, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+    return ctr(encrypter, blockSize, data, iv, {
+        cipherClass,
+        sectionSize
+    })
 }
