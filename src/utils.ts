@@ -15,7 +15,9 @@ export interface ACPKMConstructor {
 
 /** ACPKM Parameters */
 export interface ACPKMParameters {
+    /** ACPKM cipher class */
     cipherClass: ACPKMConstructor,
+    /** ACPKM section size (N) */
     sectionSize: number
 }
 

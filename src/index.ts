@@ -1,6 +1,6 @@
-import { type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils";
+import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils";
 
-export { type CipherFunc } from "./utils"
+export { type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils"
 
 /**
  * Calculate length of padding bytes needed for specific block size.
@@ -340,6 +340,11 @@ export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array):
     return encrypter(xor(xorWithPrev, (tail.length === blockSize ? k1 : k2)));
 }
 
+/**
+ * ACPKM key derivation
+ * @param encrypter Encrypting function, that takes block as input
+ * @param blockSize Cipher block size
+ */
 export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): Uint8Array => {
     let result: Uint8Array[] = []
     for (let d = 0x80; d < (0x80 + blockSize * ((KEYSIZE / blockSize) | 0)); d += blockSize) {
@@ -354,9 +359,93 @@ export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): Uint8
     return concatBytes(...result)
 }
 
-export const ctr_acpkm = (cipherClass: any, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+/**
+ * Wrapper for Counter with Advance Cryptographic Prolongation of Key Material (CTR-ACPKM) mode
+ * 
+ * For decryption you SHOULD use this function again
+ * @param cipherClass Cipher class (see `ACPKMConstructor` and `ACPKMClass`)
+ * @param encrypter Encrypting function, that takes block as input
+ * @param sectionSize ACPKM section size (N)
+ * @param blockSize Cipher block size
+ * @param data Input data
+ * @param iv Initialization vector (Half of block size)
+ */
+export const ctr_acpkm = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
     return ctr(encrypter, blockSize, data, iv, {
         cipherClass,
         sectionSize
     })
+}
+
+/**
+ * ACPKM master key derivation
+ * @param cipherClass Cipher class (see `ACPKMConstructor` and `ACPKMClass`)
+ * @param encrypter Encrypting function, that takes block as input
+ * @param keySectionSize ACPKM key section size (T*)
+ * @param blockSize Cipher block size
+ * @param keyMaterialLength Length of key material
+ */
+export const acpkmDerivationMaster = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, blockSize: number, keyMaterialLength: number): Uint8Array => {
+    return ctr_acpkm(
+        cipherClass,
+        encrypter,
+        keySectionSize,
+        blockSize,
+        new Uint8Array(keyMaterialLength).fill(0),
+        new Uint8Array((blockSize / 2) | 0).fill(0xFF)
+    )
+}
+
+/**
+ * Wrapper for MAC with Advance Cryptographic Prolongation of Key Material (OMAC-ACPKM) mode
+ * @param cipherClass Cipher class (see `ACPKMConstructor` and `ACPKMClass`)
+ * @param encrypter Encrypting function, that takes block as input
+ * @param keySectionSize ACPKM key section size (T*)
+ * @param sectionSize ACPKM section size (N)
+ * @param blockSize Cipher block size
+ * @param data Input data
+ */
+export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, sectionSize: number, blockSize: number, data: Uint8Array): Uint8Array => {
+    let tail_offset = 0
+    if(data.length % blockSize == 0) {
+        tail_offset = data.length - blockSize
+    }
+    else {
+        tail_offset = data.length - (data.length % blockSize)
+    }
+
+    let prev: Uint8Array = new Uint8Array(blockSize).fill(0)
+    let sections = data.length
+    if (data.length % sectionSize != 0) {
+        sections += 1
+    }
+    let keymats = acpkmDerivationMaster(cipherClass, encrypter, keySectionSize, blockSize, (KEYSIZE + blockSize) * sections)
+    let k1: Uint8Array = new Uint8Array(sectionSize)
+    for(let i = 0; i < tail_offset; i += blockSize) {
+        if (i % sectionSize == 0) {
+            let keymat = keymats.subarray(0, KEYSIZE + blockSize)
+            keymats = keymats.subarray(KEYSIZE + blockSize)
+            let key = keymat.subarray(0, KEYSIZE)
+            k1 = keymat.subarray(KEYSIZE)
+            let cipher = new cipherClass(key)
+            encrypter = cipher.encrypt.bind(cipher)
+        }
+        prev = encrypter(xor(data.subarray(i, i + blockSize), prev))
+    }
+
+    let tail = data.subarray(tail_offset)
+    if(tail.length == blockSize) {
+        let key = keymats.subarray(0, KEYSIZE)
+        k1 = keymats.subarray(KEYSIZE)
+        let cipher = new cipherClass(key)
+        encrypter = cipher.encrypt.bind(cipher)
+    }
+    let k2 = numberToBytesBE(bytesToNumberBE(k1) << 1n, blockSize)
+    if((k1.slice()[0] & 0x80) != 0) {
+        k2 = xor(k2, numberToBytesBE(blockSize == 16 ? Rb128 : Rb64, blockSize))
+    }
+    return encrypter(xor(
+        xor(pad3(tail, blockSize), prev),
+        (tail.length == blockSize) ? k1 : k2
+    ))
 }
