@@ -449,3 +449,5 @@ export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: Ciph
         (tail.length == blockSize) ? k1 : k2
     ))
 }
+
+export { MGM } from "./mgm"
