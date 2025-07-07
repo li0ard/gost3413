@@ -35,7 +35,7 @@ export class MGM {
     }
 
     constructor(encrypter: CipherFunc, blockSize: number, tagSize?: number) {
-        if(blockSize != 8 && blockSize && 16) throw new Error("Only 64/128-bit block size");
+        if(blockSize != 8 && blockSize != 16) throw new Error("Only 64/128-bit block size");
 
         this.tag_size = tagSize ?? blockSize
         if(this.tag_size < 4 || this.tag_size > blockSize) throw new Error("Invalid tagSize");

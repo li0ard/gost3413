@@ -86,7 +86,11 @@ export function bytesToHex(bytes: Uint8Array): string {
 }
 
 export function numberToBytesBE(n: number | bigint, len: number): Uint8Array {
-    return hexToBytes(n.toString(16).padStart(len * 2, '0'));
+    let num = n.toString(16).padStart(len * 2, '0')
+    while (num.length % 2 != 0) {
+        num = "0" + num
+    }
+    return hexToBytes(num);
 }
 
 export function hexToNumber(hex: string): bigint {
