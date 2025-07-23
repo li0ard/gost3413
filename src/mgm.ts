@@ -2,25 +2,25 @@ import { pad1 } from "./"
 import { bytesToNumberBE, concatBytes, numberToBytesBE, xor, type CipherFunc } from "./utils"
 
 const _incr = (data: Uint8Array, blockSize: number) => {
-    return numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0)
+    return numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
 }
 
 const incr_r = (data: Uint8Array, blockSize: number) => {
-    return concatBytes(data.subarray(0, ((blockSize / 2) | 0)), _incr(data.subarray(((blockSize / 2) | 0)), blockSize))
+    return concatBytes(data.subarray(0, ((blockSize / 2) | 0)), _incr(data.subarray(((blockSize / 2) | 0)), blockSize));
 }
 
 const incr_l = (data: Uint8Array, blockSize: number) => {
-    return concatBytes(_incr(data.subarray(0, ((blockSize / 2) | 0)), blockSize), data.subarray(((blockSize / 2) | 0)))
+    return concatBytes(_incr(data.subarray(0, ((blockSize / 2) | 0)), blockSize), data.subarray(((blockSize / 2) | 0)));
 }
 
 // based on go.cypherpunks.su/gogost/mgm
 /** Multilinear Galois Mode (MGM) class */
 export class MGM {
-    tag_size: number
-    encrypter: CipherFunc
-    blockSize: number
-    max_size: bigint
-    r: number
+    tag_size: number;
+    encrypter: CipherFunc;
+    blockSize: number;
+    max_size: bigint;
+    r: number;
 
     /**
      * Prepare nonce
@@ -29,22 +29,22 @@ export class MGM {
      * @param nonce Nonce
      */
     static nonce_prepare(nonce: Uint8Array): Uint8Array {
-        let n = nonce.slice()
-        n[0] &= 0x7F
-        return n
+        let n = nonce.slice();
+        n[0] &= 0x7F;
+        return n;
     }
 
     constructor(encrypter: CipherFunc, blockSize: number, tagSize?: number) {
         if(blockSize != 8 && blockSize != 16) throw new Error("Only 64/128-bit block size");
 
-        this.tag_size = tagSize ?? blockSize
+        this.tag_size = tagSize ?? blockSize;
         if(this.tag_size < 4 || this.tag_size > blockSize) throw new Error("Invalid tagSize");
 
-        this.encrypter = encrypter
-        this.blockSize = blockSize
+        this.encrypter = encrypter;
+        this.blockSize = blockSize;
         // (1n << BigInt((blockSize * 8 / 2) | 0)) - 1n
-        this.max_size = (1n << BigInt(blockSize * 4)) - 1n
-        this.r = (blockSize == 8 ? 0x1B : 0x87)
+        this.max_size = (1n << BigInt(blockSize * 4)) - 1n;
+        this.r = (blockSize == 8 ? 0x1B : 0x87);
     }
 
     // Seems to be broken
@@ -65,63 +65,57 @@ export class MGM {
         let max_bit = 1n << (BigInt(this.blockSize) * 8n - 1n);
 
         while (y > 0n) {
-            if((y & 1n) == 1n) {
-                z ^= x;
-            }
-            if((x & max_bit) > 0n) {
-                x = ((x ^ max_bit) << 1n) ^ BigInt(this.r);
-            }
-            else {
-                x <<= 1n;
-            }
+            if((y & 1n) == 1n) z ^= x;
+            if((x & max_bit) > 0n) x = ((x ^ max_bit) << 1n) ^ BigInt(this.r);
+            else x <<= 1n;
             y >>= 1n;
         }
 
-        return numberToBytesBE(z, this.blockSize)
+        return numberToBytesBE(z, this.blockSize);
     }
 
     private crypt(icn: Uint8Array, data: Uint8Array): Uint8Array {
-        icn[0] &= 0x7F
-        let enc = this.encrypter(icn)
-        let res: Uint8Array[] = []
+        icn[0] &= 0x7F;
+        let enc = this.encrypter(icn);
+        let res: Uint8Array[] = [];
         while (data.length > 0) {
-            res.push(xor(this.encrypter(enc), data))
-            enc = incr_r(enc, this.blockSize)
-            data = data.subarray(this.blockSize)
+            res.push(xor(this.encrypter(enc), data));
+            enc = incr_r(enc, this.blockSize);
+            data = data.subarray(this.blockSize);
         }
-        return concatBytes(...res)
+        return concatBytes(...res);
     }
 
     private auth(icn: Uint8Array, text: Uint8Array, ad: Uint8Array): Uint8Array {
-        icn[0] |= 0x80
+        icn[0] |= 0x80;
         let enc = this.encrypter(icn)
-        let _sum = new Uint8Array(this.blockSize)
-        let ad_len = ad.length
-        let text_len = text.length
+        let _sum = new Uint8Array(this.blockSize);
+        let ad_len = ad.length;
+        let text_len = text.length;
         while (ad.length > 0) {
             _sum = xor(_sum, this.mul(
                 this.encrypter(enc),
                 pad1(ad.subarray(0, this.blockSize), this.blockSize)
-            ))
-            enc = incr_l(enc, this.blockSize)
-            ad = ad.subarray(this.blockSize)
+            ));
+            enc = incr_l(enc, this.blockSize);
+            ad = ad.subarray(this.blockSize);
         }
 
         while (text.length > 0) {
             _sum = xor(_sum, this.mul(
                 this.encrypter(enc),
                 pad1(text.subarray(0, this.blockSize), this.blockSize)
-            ))
-            enc = incr_l(enc, this.blockSize)
-            text = text.subarray(this.blockSize)
+            ));
+            enc = incr_l(enc, this.blockSize);
+            text = text.subarray(this.blockSize);
         }
-        const halfbs = (this.blockSize / 2) | 0
+        const halfbs = (this.blockSize / 2) | 0;
         _sum = xor(_sum, this.mul(this.encrypter(enc), concatBytes(
             numberToBytesBE(ad_len * 8, halfbs),
             numberToBytesBE(text_len * 8, halfbs),
-        )))
+        )));
 
-        return this.encrypter(_sum).subarray(0, this.tag_size)
+        return this.encrypter(_sum).subarray(0, this.tag_size);
     }
 
     /**
@@ -132,12 +126,12 @@ export class MGM {
      */
     public seal(nonce: Uint8Array, plaintext: Uint8Array, additional_data: Uint8Array): Uint8Array {
         //this.validateNonce(nonce)
-        this.validateSizes(plaintext, additional_data)
+        this.validateSizes(plaintext, additional_data);
 
-        let icn = nonce.slice()
-        let ciphertext = this.crypt(icn, plaintext)
-        let tag = this.auth(icn, ciphertext, additional_data)
-        return concatBytes(ciphertext, tag)
+        let icn = nonce.slice();
+        let ciphertext = this.crypt(icn, plaintext);
+        let tag = this.auth(icn, ciphertext, additional_data);
+        return concatBytes(ciphertext, tag);
     }
 
     /**
@@ -148,15 +142,13 @@ export class MGM {
      */
     public open(nonce: Uint8Array, ciphertext: Uint8Array, additional_data: Uint8Array): Uint8Array {
         //this.validateNonce(nonce)
-        this.validateSizes(ciphertext, additional_data)
+        this.validateSizes(ciphertext, additional_data);
 
-        let icn = nonce.slice()
-        let ct = ciphertext.subarray(0, (ciphertext.length - this.tag_size))
-        let tag_expected = ciphertext.subarray((ciphertext.length - this.tag_size))
-        let tag = this.auth(icn, ct, additional_data)
-        if(!Buffer.from(tag_expected).equals(tag)) {
-            throw new Error("Invalid authentication tag") 
-        }
-        return this.crypt(icn, ct)
+        let icn = nonce.slice();
+        let ct = ciphertext.subarray(0, (ciphertext.length - this.tag_size));
+        let tag_expected = ciphertext.subarray((ciphertext.length - this.tag_size));
+        let tag = this.auth(icn, ct, additional_data);
+        if(!Buffer.from(tag_expected).equals(tag)) throw new Error("Invalid authentication tag");
+        return this.crypt(icn, ct);
     }
 }

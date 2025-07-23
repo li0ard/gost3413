@@ -5,30 +5,26 @@ export const KEYSIZE = 32;
 /** ACPKM class */
 export interface ACPKMClass {
     /** Encrypting function, that takes block as input */
-    encrypt(block: Uint8Array): Uint8Array
+    encrypt(block: Uint8Array): Uint8Array;
 }
-
 /** ACPKM class constructor */
 export interface ACPKMConstructor {
     new (key: Uint8Array): ACPKMClass
 }
-
 /** ACPKM Parameters */
 export interface ACPKMParameters {
     /** ACPKM cipher class */
-    cipherClass: ACPKMConstructor,
+    cipherClass: ACPKMConstructor;
     /** ACPKM section size (N) */
-    sectionSize: number
+    sectionSize: number;
 }
 
 export const xor = (a: Uint8Array, b: Uint8Array) => {
-    let mlen = Math.min(a.length, b.length)
-    let result = new Uint8Array(mlen)
-    for(let i = 0; i < mlen; i++) {
-        result[i] = a[i] ^ b[i]
-    }
+    let mlen = Math.min(a.length, b.length);
+    let result = new Uint8Array(mlen);
+    for(let i = 0; i < mlen; i++) result[i] = a[i] ^ b[i];
 
-    return result.slice()
+    return result.slice();
 }
 
 
@@ -79,17 +75,13 @@ const hexes = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '
 export function bytesToHex(bytes: Uint8Array): string {
     // pre-caching improves the speed 6x
     let hex = '';
-    for (let i = 0; i < bytes.length; i++) {
-        hex += hexes[bytes[i]];
-    }
+    for (let i = 0; i < bytes.length; i++) hex += hexes[bytes[i]];
     return hex;
 }
 
 export function numberToBytesBE(n: number | bigint, len: number): Uint8Array {
-    let num = n.toString(16).padStart(len * 2, '0')
-    while (num.length % 2 != 0) {
-        num = "0" + num
-    }
+    let num = n.toString(16).padStart(len * 2, '0');
+    while (num.length % 2 != 0) num = "0" + num;
     return hexToBytes(num);
 }
 
