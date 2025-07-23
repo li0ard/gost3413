@@ -414,6 +414,14 @@ export const kexp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blo
     return ctr(encrypter_key, blockSize, concatBytes(key, key_mac), iv);
 }
 
+/**
+ * KImp15 key importing
+ * @param encrypter_key Encrypting function for key decryption, that takes block as input
+ * @param encrypter_mac Encrypting function for key authentication, that takes block as input
+ * @param blockSize Cipher block size
+ * @param key Key to export
+ * @param iv Initialization vector (Half of block size)
+ */
 export const kimp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, kexp: Uint8Array, iv: Uint8Array): Uint8Array => {
     const halfBlockSize = (blockSize / 2) | 0;
     if (iv.length !== halfBlockSize) throw new Error("Invalid IV size");
