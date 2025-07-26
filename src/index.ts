@@ -30,7 +30,7 @@ export const pad1 = (data: Uint8Array, blockSize: number): Uint8Array => {
 }
 
 /**
- * Prodecure 2 (aka `Процедура 2` aka `ISO/IEC 7816-4`)
+ * Procedure 2 (aka `Процедура 2` aka `ISO/IEC 7816-4`)
  * @param data Input data
  * @param blockSize Target block size
  */
@@ -47,7 +47,7 @@ export const pad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
  * @param blockSize Target block size
  */
 export const unpad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
-    const lastBlock = data.subarray(data.length - blockSize);
+    const lastBlock = data.slice(data.length - blockSize);
     let padIndex = -1;
 
     for (let i = lastBlock.length - 1; i >= 0; i--) {
@@ -62,11 +62,11 @@ export const unpad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
         if (lastBlock[i] !== 0) throw new Error("Invalid padding: non-zero bytes after 0x80");
     }
 
-    return data.subarray(0, data.length - (blockSize - padIndex));
+    return data.slice(0, data.length - (blockSize - padIndex));
 }
 
 /**
- * Prodecure 3 (aka `Процедура 3`)
+ * Procedure 3 (aka `Процедура 3`)
  * 
  * If length of data matches block size, do nothing; otherwise, use Procedure 2 (`pad2`)
  * @param data Input data
@@ -134,13 +134,13 @@ export const ofb = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, 
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
-    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.subarray(i, i + blockSize));
+    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.slice(i, i + blockSize));
 
     const result: Uint8Array[] = [];
     for(let i = 0; i < (data.length + getPadLength(data.length, blockSize)); i += blockSize) {
         r = r.slice(1).concat([encrypter(r[0])]);
         const keystreamBlock = r[r.length - 1];
-        const dataBlock = data.subarray(i, i + blockSize);
+        const dataBlock = data.slice(i, i + blockSize);
         result.push(xor(keystreamBlock, dataBlock));
     }
 
@@ -159,11 +159,11 @@ export const cbc_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
-    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.subarray(i, i + blockSize));
+    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.slice(i, i + blockSize));
 
     const result: Uint8Array[] = [];
     for(let i = 0; i < data.length; i += blockSize) {
-        result.push(encrypter(xor(r[0], data.subarray(i, i + blockSize))));
+        result.push(encrypter(xor(r[0], data.slice(i, i + blockSize))));
         r = r.slice(1).concat([result[result.length-1]]);
     }
 
@@ -182,11 +182,11 @@ export const cbc_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
-    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.subarray(i, i + blockSize));
+    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.slice(i, i + blockSize));
 
     const result: Uint8Array[] = [];
     for(let i = 0; i < data.length; i += blockSize) {
-        let blk = data.subarray(i, i+blockSize);
+        let blk = data.slice(i, i+blockSize);
         result.push(xor(r[0], decrypter(blk)));
         r = r.slice(1).concat([blk]);
     }
@@ -205,11 +205,11 @@ export const cfb_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
-    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.subarray(i, i + blockSize));
+    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.slice(i, i + blockSize));
 
     const result: Uint8Array[] = [];
     for(let i = 0; i < (data.length + getPadLength(data.length, blockSize)); i += blockSize) {
-        result.push(xor(encrypter(r[0]), data.subarray(i, i + blockSize)));
+        result.push(xor(encrypter(r[0]), data.slice(i, i + blockSize)));
         r = r.slice(1).concat([result[result.length - 1]]);
     }
 
@@ -227,11 +227,11 @@ export const cfb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
-    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.subarray(i, i + blockSize));
+    for (let i = 0; i < iv.length; i += blockSize) r.push(iv.slice(i, i + blockSize));
 
     const result: Uint8Array[] = [];
     for(let i = 0; i < (data.length + getPadLength(data.length, blockSize)); i += blockSize) {
-        let blk = data.subarray(i, i + blockSize);
+        let blk = data.slice(i, i + blockSize);
         result.push(xor(decrypter(r[0]), blk));
         r = r.slice(1).concat([blk]);
     }
@@ -304,8 +304,8 @@ export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array):
     if (data.length % blockSize === 0) tailOffset = data.length - blockSize;
     else tailOffset = data.length - (data.length % blockSize);
     let prev: Uint8Array = new Uint8Array(blockSize);
-    for (let i = 0; i < tailOffset; i += blockSize) prev = encrypter(xor(data.subarray(i, i + blockSize), prev));
-    const tail = data.subarray(tailOffset);
+    for (let i = 0; i < tailOffset; i += blockSize) prev = encrypter(xor(data.slice(i, i + blockSize), prev));
+    const tail = data.slice(tailOffset);
     const xorWithPrev = xor(pad3(tail, blockSize), prev);
     return encrypter(xor(xorWithPrev, (tail.length === blockSize ? k1 : k2)));
 }
@@ -374,20 +374,20 @@ export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: Ciph
     let k1: Uint8Array = new Uint8Array(sectionSize);
     for(let i = 0; i < tail_offset; i += blockSize) {
         if (i % sectionSize == 0) {
-            let keymat = keymats.subarray(0, KEYSIZE + blockSize);
-            keymats = keymats.subarray(KEYSIZE + blockSize);
-            let key = keymat.subarray(0, KEYSIZE);
-            k1 = keymat.subarray(KEYSIZE);
+            let keymat = keymats.slice(0, KEYSIZE + blockSize);
+            keymats = keymats.slice(KEYSIZE + blockSize);
+            let key = keymat.slice(0, KEYSIZE);
+            k1 = keymat.slice(KEYSIZE);
             let cipher = new cipherClass(key);
             encrypter = cipher.encrypt.bind(cipher);
         }
-        prev = encrypter(xor(data.subarray(i, i + blockSize), prev));
+        prev = encrypter(xor(data.slice(i, i + blockSize), prev));
     }
 
-    let tail = data.subarray(tail_offset);
+    let tail = data.slice(tail_offset);
     if(tail.length == blockSize) {
-        let key = keymats.subarray(0, KEYSIZE);
-        k1 = keymats.subarray(KEYSIZE);
+        let key = keymats.slice(0, KEYSIZE);
+        k1 = keymats.slice(KEYSIZE);
         let cipher = new cipherClass(key);
         encrypter = cipher.encrypt.bind(cipher);
     }
@@ -419,7 +419,7 @@ export const kexp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blo
  * @param encrypter_key Encrypting function for key decryption, that takes block as input
  * @param encrypter_mac Encrypting function for key authentication, that takes block as input
  * @param blockSize Cipher block size
- * @param key Key to export
+ * @param kexp Key to import
  * @param iv Initialization vector (Half of block size)
  */
 export const kimp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, kexp: Uint8Array, iv: Uint8Array): Uint8Array => {

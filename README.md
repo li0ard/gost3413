@@ -24,3 +24,24 @@ npm i @li0ard/gost3413
 # from JSR
 bunx jsr i @li0ard/gost3413
 ```
+
+## Supported modes
+- [x] Electronic Codebook (ECB)
+- [x] Cipher Block Chaining (CBC)
+- [x] Cipher Feedback (CFB)
+- [x] Counter (CTR)
+- [x] Output Feedback (OFB)
+- [x] MAC (CMAC/OMAC)
+- [x] Counter with Advance Cryptographic Prolongation of Key Material (CTR-ACPKM)
+- [x] MAC with Advance Cryptographic Prolongation of Key Material (OMAC-ACPKM)
+- [x] Multilinear Galois Mode (MGM)
+- [x] KExp15/KImp15
+- [x] Padding method #1 (`Процедура 1`/`Procedure 1`)
+- [x] Padding method #2 (`Процедура 2`/`Procedure 2`/`ISO/IEC 7816-4`)
+- [x] Padding method #3 (`Процедура 3`/`Procedure 3`)
+
+## Features
+- Provides simple and modern API
+- Most of the APIs are strictly typed
+- Fully complies with [GOST R 34.13-2015 (in Russian)](https://tc26.ru/standard/gost/GOST_R_3413-2015.pdf) standard
+- Supports Bun, Node.js, Deno, Browsers
