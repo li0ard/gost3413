@@ -90,6 +90,4 @@ export function hexToNumber(hex: string): bigint {
     return hex === '' ? 0n : BigInt('0x' + hex);
 }
   
-export function bytesToNumberBE(bytes: Uint8Array): bigint {
-    return hexToNumber(bytesToHex(bytes));
-}
+export const bytesToNumberBE = (bytes: Uint8Array): bigint => hexToNumber(bytesToHex(bytes));

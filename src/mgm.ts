@@ -1,17 +1,9 @@
-import { pad1 } from "./"
-import { bytesToNumberBE, concatBytes, numberToBytesBE, xor, type CipherFunc } from "./utils"
+import { pad1 } from "./index.js";
+import { bytesToNumberBE, concatBytes, numberToBytesBE, xor, type CipherFunc } from "./utils.js"
 
-const _incr = (data: Uint8Array, blockSize: number) => {
-    return numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
-}
-
-const incr_r = (data: Uint8Array, blockSize: number) => {
-    return concatBytes(data.slice(0, ((blockSize / 2) | 0)), _incr(data.slice(((blockSize / 2) | 0)), blockSize));
-}
-
-const incr_l = (data: Uint8Array, blockSize: number) => {
-    return concatBytes(_incr(data.slice(0, ((blockSize / 2) | 0)), blockSize), data.slice(((blockSize / 2) | 0)));
-}
+const _incr = (data: Uint8Array, blockSize: number): Uint8Array => numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
+const incr_r = (data: Uint8Array, blockSize: number): Uint8Array => concatBytes(data.slice(0, ((blockSize / 2) | 0)), _incr(data.slice(((blockSize / 2) | 0)), blockSize));
+const incr_l = (data: Uint8Array, blockSize: number): Uint8Array => concatBytes(_incr(data.slice(0, ((blockSize / 2) | 0)), blockSize), data.slice(((blockSize / 2) | 0)));
 
 // based on go.cypherpunks.su/gogost/mgm
 /** Multilinear Galois Mode (MGM) class */

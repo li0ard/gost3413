@@ -1,6 +1,6 @@
-import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils";
-export { type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils";
-export { MGM } from "./mgm";
+import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils.js";
+export { type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils.js";
+export { MGM } from "./mgm.js";
 
 export const isEqual = (a: Uint8Array, b: Uint8Array): boolean => (a.length === b.length && a.every((val, i) => val === b[i]));
 
