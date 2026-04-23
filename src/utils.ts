@@ -125,12 +125,12 @@ export interface ACPKMParameters {
     sectionSize: number;
 }
 
-export const xor = (a: Uint8Array, b: Uint8Array) => {
+export const xor = (a: Uint8Array, b: Uint8Array): Uint8Array => {
     let mlen = Math.min(a.length, b.length);
     let result = new Uint8Array(mlen);
     for(let i = 0; i < mlen; i++) result[i] = a[i] ^ b[i];
 
-    return result.slice();
+    return result;
 }
 
 
