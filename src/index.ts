@@ -1,8 +1,7 @@
-import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, KEYSIZE, numberToBytesBE, xor } from "./utils.js";
-export { type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils.js";
+import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, equalBytes, KEYSIZE, numberToBytesBE, xor } from "./utils.js";
+export { type TypedArg, type TypedRet, type TArg, type TRet, type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils.js";
+export { xor, equalBytes, concatBytes, hexToBytes, bytesToHex, numberToBytesBE, numberToBytesLE, hexToNumber, bytesToNumberBE, bytesToNumberLE } from "./utils.js";
 export { MGM } from "./mgm.js";
-
-export const isEqual = (a: Uint8Array, b: Uint8Array): boolean => (a.length === b.length && a.every((val, i) => val === b[i]));
 
 /**
  * Calculate length of padding bytes needed for specific block size.
@@ -428,6 +427,6 @@ export const kimp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blo
     const key_and_key_mac = ctr(encrypter_key, blockSize, kexp, iv);
     const [key, key_mac] = [key_and_key_mac.slice(0, -blockSize), key_and_key_mac.slice(-blockSize)];
 
-    if(!isEqual(mac(encrypter_mac, blockSize, concatBytes(iv, key)), key_mac)) throw new Error("Invalid authentication tag");
+    if(!equalBytes(mac(encrypter_mac, blockSize, concatBytes(iv, key)), key_mac)) throw new Error("Invalid authentication tag");
     return key;
 }

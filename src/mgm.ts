@@ -1,5 +1,5 @@
 import { pad1 } from "./index.js";
-import { bytesToNumberBE, concatBytes, numberToBytesBE, xor, type CipherFunc } from "./utils.js"
+import { bytesToNumberBE, concatBytes, equalBytes, numberToBytesBE, xor, type CipherFunc } from "./utils.js"
 
 const _incr = (data: Uint8Array, blockSize: number): Uint8Array => numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
 const incr_r = (data: Uint8Array, blockSize: number): Uint8Array => concatBytes(data.slice(0, ((blockSize / 2) | 0)), _incr(data.slice(((blockSize / 2) | 0)), blockSize));
@@ -140,7 +140,7 @@ export class MGM {
         let ct = ciphertext.slice(0, (ciphertext.length - this.tag_size));
         let tag_expected = ciphertext.slice((ciphertext.length - this.tag_size));
         let tag = this.auth(icn, ct, additional_data);
-        if(!Buffer.from(tag_expected).equals(tag)) throw new Error("Invalid authentication tag");
+        if(!equalBytes(tag_expected, tag)) throw new Error("Invalid authentication tag");
         return this.crypt(icn, ct);
     }
 }
