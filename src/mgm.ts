@@ -1,9 +1,12 @@
 import { pad1 } from "./index.js";
-import { bytesToNumberBE, concatBytes, equalBytes, numberToBytesBE, xor, type CipherFunc } from "./utils.js"
+import { bytesToNumberBE, concatBytes, equalBytes, numberToBytesBE, xor, type CipherFunc, type TArg, type TRet } from "./utils.js"
 
-const _incr = (data: Uint8Array, blockSize: number): Uint8Array => numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
-const incr_r = (data: Uint8Array, blockSize: number): Uint8Array => concatBytes(data.slice(0, ((blockSize / 2) | 0)), _incr(data.slice(((blockSize / 2) | 0)), blockSize));
-const incr_l = (data: Uint8Array, blockSize: number): Uint8Array => concatBytes(_incr(data.slice(0, ((blockSize / 2) | 0)), blockSize), data.slice(((blockSize / 2) | 0)));
+const _incr = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> =>
+    numberToBytesBE(bytesToNumberBE(data) + 1n, (blockSize / 2) | 0);
+const incr_r = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> =>
+    concatBytes(data.slice(0, ((blockSize / 2) | 0)), _incr(data.slice(((blockSize / 2) | 0)), blockSize));
+const incr_l = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> =>
+    concatBytes(_incr(data.slice(0, ((blockSize / 2) | 0)), blockSize), data.slice(((blockSize / 2) | 0)));
 
 // based on go.cypherpunks.su/gogost/mgm
 /** Multilinear Galois Mode (MGM) class */
@@ -20,7 +23,7 @@ export class MGM {
      * Just clear MSB bit
      * @param nonce Nonce
      */
-    static nonce_prepare(nonce: Uint8Array): Uint8Array {
+    static nonce_prepare(nonce: TArg<Uint8Array>): TRet<Uint8Array> {
         let n = nonce.slice();
         n[0] &= 0x7F;
         return n;
@@ -40,17 +43,17 @@ export class MGM {
     }
 
     // Seems to be broken
-    private validateNonce(nonce: Uint8Array) {
+    private validateNonce(nonce: TArg<Uint8Array>) {
         if(nonce.length != this.blockSize) throw new Error("Invalid nonce length");
         if((nonce[0] & 0x80) > 0) throw new Error("Invalid nonce");
     }
 
-    private validateSizes(plaintext: Uint8Array, additional: Uint8Array) {
+    private validateSizes(plaintext: TArg<Uint8Array>, additional: TArg<Uint8Array>) {
         if(plaintext.length == 0 && additional.length == 0) throw new Error("At least one of plaintext or additional_data required");
         if((plaintext.length + additional.length) > this.max_size) throw new Error("plaintext+additional_data are too big");
     }
 
-    private mul(a: Uint8Array, b: Uint8Array): Uint8Array {
+    private mul(a: TArg<Uint8Array>, b: TArg<Uint8Array>): TRet<Uint8Array> {
         let x = bytesToNumberBE(a);
         let y = bytesToNumberBE(b);
         let z = 0n;
@@ -66,7 +69,7 @@ export class MGM {
         return numberToBytesBE(z, this.blockSize);
     }
 
-    private crypt(icn: Uint8Array, data: Uint8Array): Uint8Array {
+    private crypt(icn: TArg<Uint8Array>, data: TArg<Uint8Array>): TRet<Uint8Array> {
         icn[0] &= 0x7F;
         let enc = this.encrypter(icn);
         let res: Uint8Array[] = [];
@@ -78,7 +81,7 @@ export class MGM {
         return concatBytes(...res);
     }
 
-    private auth(icn: Uint8Array, text: Uint8Array, ad: Uint8Array): Uint8Array {
+    private auth(icn: TArg<Uint8Array>, text: TArg<Uint8Array>, ad: TArg<Uint8Array>): TRet<Uint8Array> {
         icn[0] |= 0x80;
         let enc = this.encrypter(icn)
         let _sum = new Uint8Array(this.blockSize);
@@ -116,7 +119,7 @@ export class MGM {
      * @param plaintext Data to be encrypted and authenticated
      * @param additional_data Additional data to be authenticated
      */
-    public seal(nonce: Uint8Array, plaintext: Uint8Array, additional_data: Uint8Array): Uint8Array {
+    public seal(nonce: TArg<Uint8Array>, plaintext: TArg<Uint8Array>, additional_data: TArg<Uint8Array>): TRet<Uint8Array> {
         //this.validateNonce(nonce)
         this.validateSizes(plaintext, additional_data);
 
@@ -132,7 +135,7 @@ export class MGM {
      * @param ciphertext Data to be decrypted and authenticated
      * @param additional_data Additional data to be authenticated
      */
-    public open(nonce: Uint8Array, ciphertext: Uint8Array, additional_data: Uint8Array): Uint8Array {
+    public open(nonce: TArg<Uint8Array>, ciphertext: TArg<Uint8Array>, additional_data: TArg<Uint8Array>): TRet<Uint8Array> {
         //this.validateNonce(nonce)
         this.validateSizes(ciphertext, additional_data);
 

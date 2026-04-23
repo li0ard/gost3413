@@ -1,4 +1,4 @@
-import { type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, equalBytes, KEYSIZE, numberToBytesBE, xor } from "./utils.js";
+import { type TArg, type TRet, type ACPKMConstructor, type ACPKMParameters, bytesToNumberBE, type CipherFunc, concatBytes, equalBytes, KEYSIZE, numberToBytesBE, xor } from "./utils.js";
 export { type TypedArg, type TypedRet, type TArg, type TRet, type ACPKMClass, type ACPKMConstructor, type ACPKMParameters, type CipherFunc, KEYSIZE } from "./utils.js";
 export { xor, equalBytes, concatBytes, hexToBytes, bytesToHex, numberToBytesBE, numberToBytesLE, hexToNumber, bytesToNumberBE, bytesToNumberLE } from "./utils.js";
 export { MGM } from "./mgm.js";
@@ -22,7 +22,7 @@ export const getPadLength = (dataLength: number, blockSize: number): number => {
  * @param data Input data
  * @param blockSize Target block size
  */
-export const pad1 = (data: Uint8Array, blockSize: number): Uint8Array => {
+export const pad1 = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> => {
     const padded = new Uint8Array(data.length + getPadLength(data.length, blockSize));
     padded.set(data);
     return padded;
@@ -33,7 +33,7 @@ export const pad1 = (data: Uint8Array, blockSize: number): Uint8Array => {
  * @param data Input data
  * @param blockSize Target block size
  */
-export const pad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
+export const pad2 = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> => {
     const padded = new Uint8Array(data.length + 1 + getPadLength(data.length + 1, blockSize));
     padded.set(data, 0);
     padded[data.length] = 0x80;
@@ -45,7 +45,7 @@ export const pad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
  * @param data Input data
  * @param blockSize Target block size
  */
-export const unpad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
+export const unpad2 = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> => {
     const lastBlock = data.slice(data.length - blockSize);
     let padIndex = -1;
 
@@ -71,8 +71,8 @@ export const unpad2 = (data: Uint8Array, blockSize: number): Uint8Array => {
  * @param data Input data
  * @param blockSize Block size
  */
-export const pad3 = (data: Uint8Array, blockSize: number): Uint8Array => {
-    if(getPadLength(data.length, blockSize) == 0) return data;
+export const pad3 = (data: TArg<Uint8Array>, blockSize: number): TRet<Uint8Array> => {
+    if(getPadLength(data.length, blockSize) == 0) return data as TRet<Uint8Array>;
     return pad2(data, blockSize);
 }
 
@@ -82,7 +82,7 @@ export const pad3 = (data: Uint8Array, blockSize: number): Uint8Array => {
  * @param blockSize Cipher block size
  * @param data Input data
  */
-export const ecb_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint8Array): Uint8Array => {
+export const ecb_encrypt = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (data.length == 0 || data.length % blockSize !== 0) throw new Error("Data not aligned");
 
     const result = new Uint8Array(data.length);
@@ -104,7 +104,7 @@ export const ecb_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint
  * @param blockSize Cipher block size
  * @param data Input data
  */
-export const ecb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint8Array): Uint8Array => {
+export const ecb_decrypt = (decrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (data.length == 0 || data.length % blockSize !== 0) throw new Error("Data not aligned");
 
     const result = new Uint8Array(data.length);
@@ -129,7 +129,7 @@ export const ecb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
  * @param data Input data
  * @param iv Initialization vector
  */
-export const ofb = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const ofb = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
@@ -153,7 +153,7 @@ export const ofb = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, 
  * @param data Input data
  * @param iv Initialization vector
  */
-export const cbc_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const cbc_encrypt = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (data.length == 0 || data.length % blockSize !== 0) throw new Error("Data not aligned");
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
@@ -176,7 +176,7 @@ export const cbc_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint
  * @param data Input data
  * @param iv Initialization vector
  */
-export const cbc_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const cbc_decrypt = (decrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (data.length == 0 || data.length % blockSize !== 0) throw new Error("Data not aligned");
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
@@ -200,7 +200,7 @@ export const cbc_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
  * @param data Input data
  * @param iv Initialization vector
  */
-export const cfb_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const cfb_encrypt = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
@@ -222,7 +222,7 @@ export const cfb_encrypt = (encrypter: CipherFunc, blockSize: number, data: Uint
  * @param data Input data
  * @param iv Initialization vector
  */
-export const cfb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const cfb_decrypt = (decrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     if (iv.length == 0 || iv.length % blockSize !== 0) throw new Error("Invalid IV size");
 
     let r: Uint8Array[] = [];
@@ -248,7 +248,7 @@ export const cfb_decrypt = (decrypter: CipherFunc, blockSize: number, data: Uint
  * @param iv Initialization vector (Half of block size)
  * @param acpkm Optional. Parameters for CTR-ACPKM mode
  */
-export const ctr = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, iv: Uint8Array, acpkm?: ACPKMParameters): Uint8Array => {
+export const ctr = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>, acpkm?: ACPKMParameters): TRet<Uint8Array> => {
     const halfBlockSize = (blockSize / 2) | 0;
     if (iv.length !== halfBlockSize) throw new Error("Invalid IV size");
 
@@ -274,12 +274,12 @@ export const ctr = (encrypter: CipherFunc, blockSize: number, data: Uint8Array, 
 const Rb64 = 0b11011;
 const Rb128 = 0b10000111;
 
-const macShift = (blockSize: number, data: Uint8Array, xorLsb: number = 0): Uint8Array => {
+const macShift = (blockSize: number, data: TArg<Uint8Array>, xorLsb: number = 0): TRet<Uint8Array> => {
     const num = (bytesToNumberBE(data) * BigInt(2)) ^ BigInt(xorLsb);
     return numberToBytesBE(num, blockSize).slice(-blockSize);
 }
 
-const macKs = (encrypter: (block: Uint8Array) => Uint8Array, blockSize: number): Uint8Array[] => {
+const macKs = (encrypter: CipherFunc, blockSize: number): Uint8Array[] => {
     const Rb = blockSize === 16 ? Rb128 : Rb64;
     const l = encrypter(new Uint8Array(blockSize));
     let k1: Uint8Array;
@@ -297,7 +297,7 @@ const macKs = (encrypter: (block: Uint8Array) => Uint8Array, blockSize: number):
  * @param blockSize Cipher block size
  * @param data Input data
  */
-export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array): Uint8Array => {
+export const mac = (encrypter: CipherFunc, blockSize: number, data: TArg<Uint8Array>): TRet<Uint8Array> => {
     const [k1, k2] = macKs(encrypter, blockSize);
     let tailOffset: number;
     if (data.length % blockSize === 0) tailOffset = data.length - blockSize;
@@ -314,7 +314,7 @@ export const mac = (encrypter: CipherFunc, blockSize: number, data: Uint8Array):
  * @param encrypter Encrypting function, that takes block as input
  * @param blockSize Cipher block size
  */
-export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): Uint8Array => {
+export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): TRet<Uint8Array> => {
     let result: Uint8Array[] = [];
     for (let d = 0x80; d < (0x80 + blockSize * ((KEYSIZE / blockSize) | 0)); d += blockSize) {
         const block = new Uint8Array(blockSize);
@@ -336,7 +336,7 @@ export const acpkmDerivation = (encrypter: CipherFunc, blockSize: number): Uint8
  * @param data Input data
  * @param iv Initialization vector (Half of block size)
  */
-export const ctr_acpkm = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const ctr_acpkm = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, sectionSize: number, blockSize: number, data: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     return ctr(encrypter, blockSize, data, iv, { cipherClass, sectionSize });
 }
 
@@ -348,7 +348,7 @@ export const ctr_acpkm = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, 
  * @param blockSize Cipher block size
  * @param keyMaterialLength Length of key material
  */
-export const acpkmDerivationMaster = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, blockSize: number, keyMaterialLength: number): Uint8Array => {
+export const acpkmDerivationMaster = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, blockSize: number, keyMaterialLength: number): TRet<Uint8Array> => {
     return ctr_acpkm(cipherClass, encrypter, keySectionSize, blockSize, new Uint8Array(keyMaterialLength).fill(0), new Uint8Array((blockSize / 2) | 0).fill(0xFF));
 }
 
@@ -361,7 +361,7 @@ export const acpkmDerivationMaster = (cipherClass: ACPKMConstructor, encrypter: 
  * @param blockSize Cipher block size
  * @param data Input data
  */
-export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, sectionSize: number, blockSize: number, data: Uint8Array): Uint8Array => {
+export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: CipherFunc, keySectionSize: number, sectionSize: number, blockSize: number, data: TArg<Uint8Array>): TRet<Uint8Array> => {
     let tail_offset = 0;
     if(data.length % blockSize == 0) tail_offset = data.length - blockSize;
     else tail_offset = data.length - (data.length % blockSize);
@@ -406,7 +406,7 @@ export const omac_acpkm_master = (cipherClass: ACPKMConstructor, encrypter: Ciph
  * @param key Key to export
  * @param iv Initialization vector (Half of block size)
  */
-export const kexp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, key: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const kexp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, key: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     const halfBlockSize = (blockSize / 2) | 0;
     if (iv.length !== halfBlockSize) throw new Error("Invalid IV size");
     let key_mac = mac(encrypter_mac, blockSize, concatBytes(iv, key));
@@ -421,7 +421,7 @@ export const kexp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blo
  * @param kexp Key to import
  * @param iv Initialization vector (Half of block size)
  */
-export const kimp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, kexp: Uint8Array, iv: Uint8Array): Uint8Array => {
+export const kimp15 = (encrypter_key: CipherFunc, encrypter_mac: CipherFunc, blockSize: number, kexp: TArg<Uint8Array>, iv: TArg<Uint8Array>): TRet<Uint8Array> => {
     const halfBlockSize = (blockSize / 2) | 0;
     if (iv.length !== halfBlockSize) throw new Error("Invalid IV size");
     const key_and_key_mac = ctr(encrypter_key, blockSize, kexp, iv);

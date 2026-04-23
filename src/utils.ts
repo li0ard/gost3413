@@ -105,17 +105,17 @@ export type TRet<T> = T extends unknown
   : never;
 
 /** Type for cipher function */
-export type CipherFunc = (data: Uint8Array) => Uint8Array;
+export type CipherFunc = (data: TArg<Uint8Array>) => TRet<Uint8Array>;
 /** Key size */
 export const KEYSIZE = 32;
 /** ACPKM class */
 export interface ACPKMClass {
     /** Encrypting function, that takes block as input */
-    encrypt(block: Uint8Array): Uint8Array;
+    encrypt(block: TArg<Uint8Array>): TRet<Uint8Array>;
 }
 /** ACPKM class constructor */
 export interface ACPKMConstructor {
-    new (key: Uint8Array): ACPKMClass
+    new (key: TArg<Uint8Array>): ACPKMClass
 }
 /** ACPKM Parameters */
 export interface ACPKMParameters {
@@ -125,7 +125,7 @@ export interface ACPKMParameters {
     sectionSize: number;
 }
 
-export const xor = (a: Uint8Array, b: Uint8Array): Uint8Array => {
+export const xor = (a: TArg<Uint8Array>, b: TArg<Uint8Array>): TRet<Uint8Array> => {
     let mlen = Math.min(a.length, b.length);
     let result = new Uint8Array(mlen);
     for(let i = 0; i < mlen; i++) result[i] = a[i] ^ b[i];
@@ -136,14 +136,14 @@ export const xor = (a: Uint8Array, b: Uint8Array): Uint8Array => {
 
 // Code from awesome projects `@noble/curves` and `@noble/hashes`
 
-export function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
+export function equalBytes(a: TArg<Uint8Array>, b: TArg<Uint8Array>): boolean {
     if (a.length !== b.length) return false;
     let diff = 0;
     for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
     return diff === 0;
 }
 
-export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+export function concatBytes(...arrays: Uint8Array[]): TRet<Uint8Array> {
     let sum = 0;
     for (let i = 0; i < arrays.length; i++) {
         const a = arrays[i];
@@ -166,7 +166,7 @@ function asciiToBase16(ch: number): number | undefined {
     return;
 }
 
-export function hexToBytes(hex: string): Uint8Array {
+export function hexToBytes(hex: string): TRet<Uint8Array> {
     if (typeof hex !== 'string') throw new Error('hex string expected, got ' + typeof hex);
     const hl = hex.length;
     const al = hl / 2;
@@ -185,25 +185,25 @@ export function hexToBytes(hex: string): Uint8Array {
 }
 
 const hexes = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
-export const bytesToHex = (bytes: Uint8Array): string => {
+export const bytesToHex = (bytes: TArg<Uint8Array>): string => {
     // pre-caching improves the speed 6x
     let hex = '';
     for (let i = 0; i < bytes.length; i++) hex += hexes[bytes[i]];
     return hex;
 }
 
-export const numberToBytesBE = (n: number | bigint, len: number): Uint8Array => {
+export const numberToBytesBE = (n: number | bigint, len: number): TRet<Uint8Array> => {
     let num = n.toString(16).padStart(len * 2, '0');
     while (num.length % 2 != 0) num = "0" + num;
     return hexToBytes(num);
 }
 
-export const numberToBytesLE = (n: number | bigint, len: number): Uint8Array => numberToBytesBE(n, len).reverse();
+export const numberToBytesLE = (n: number | bigint, len: number): TRet<Uint8Array> => numberToBytesBE(n, len).reverse();
 
 export const hexToNumber = (hex: string): bigint => {
     if (typeof hex !== 'string') throw new Error('hex string expected, got ' + typeof hex);
     return hex === '' ? 0n : BigInt('0x' + hex);
 }
   
-export const bytesToNumberBE = (bytes: Uint8Array): bigint => hexToNumber(bytesToHex(bytes));
-export const bytesToNumberLE = (bytes: Uint8Array): bigint => hexToNumber(bytesToHex(Uint8Array.from(bytes).reverse()));
+export const bytesToNumberBE = (bytes: TArg<Uint8Array>): bigint => hexToNumber(bytesToHex(bytes));
+export const bytesToNumberLE = (bytes: TArg<Uint8Array>): bigint => hexToNumber(bytesToHex(Uint8Array.from(bytes).reverse()));
