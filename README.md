@@ -12,6 +12,9 @@
     <hr>
 </p>
 
+> [!IMPORTANT]  
+> This repository is archived. All GOST implementations moved to [`@li0ard/gost`](https://github.com/li0ard/gost)
+
 > [!WARNING]
 > This module contains only wrappers for encryption modes without reference to a specific cipher
 
